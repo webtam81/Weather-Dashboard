@@ -1,8 +1,22 @@
 //VARIABLES
+let latitude;
+let longitude;
+let queryURL = 'api.openweathermap.org/data/2.5/forecast?lat=' + latitude + '&lon=' + longitude + '&appid=d1812ca69b57b9e8fd8ff23d673f0f07';
+let searchInput;
+let searchBtn = $('#search-button');
 
 //FUNCTIONS
+function addLocation () {
+
+}
+
 
 //EVENT LISTENERS
+searchBtn.on('click', function() {
+    event.preventDefault();
+    searchInput = $('#search-input').val();
+    console.log(`You searched ${searchInput}`);
+});
 
 //TODO
 
