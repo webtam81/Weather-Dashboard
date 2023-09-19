@@ -8,10 +8,15 @@ let locations = ['Birmingham', 'Toronto', 'Aberdeen']; //TODO change to empty
 let searchHistoryEl = $('#history');
 
 //FUNCTIONS
+//add location to side bar
 function addLocation () {
-
+    let newButton = $('<button>');
+    newButton.addClass('location');
+    newButton.text(searchInput);
+    searchHistoryEl.append(newButton);
 }
 
+//render locations already in array
 function renderLocations () {
     console.log(locations);
     if (locations.length < 1) {
@@ -26,22 +31,28 @@ function renderLocations () {
     }
 }
 
+//save array to local storage
 function saveLocations () {
     //save locations to localstorage
 }
 
+//get array from local storage
 function getLocations () {
     //get locations from localstorage
 }
 
 
 //EVENT LISTENERS
+//search button
+//TODO - generate lat/long
 searchBtn.on('click', function() {
     event.preventDefault();
     searchInput = $('#search-input').val();
-    console.log(`You searched ${searchInput}`);
-    //add this to local storage
+    console.log(`You searched ${searchInput}`); //TODO rm
+    //add this to array
+    locations.push(searchInput);
     //create button from this and add to aside
+    addLocation (); 
 });
 
 //TODO
