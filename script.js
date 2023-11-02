@@ -7,26 +7,26 @@ let geocodedLocation;
 let queryURL;
 let geocodingURL;
 
-let searchBtn = $('#search-button');
-//let locationsArray = ['Birmingham', 'Toronto', 'Aberdeen']; //TODO change to empty
-let generatedLocations = {}; //object to store results of initial location search
-let locationsArray = {}; //object to hold stored locations
+let generatedLocations = new Array(); //array to store results of initial location search
+let locationsArray = []; //array to hold stored locations
+let selectedCity = [];
+
 let searchHistoryEl = $('#history');
+let searchBtn = $('#search-button');
 
 //FUNCTIONS
 //add location to side bar
 function addLocation () {
-    //add this to array
+    //add this to array...........??? what?
     if (searchInput == '') {
         return;
     } else {
-        locationsArray.push(searchInput); //update this?
-        //console.log(locationsArray); //TODO rm
+        locationsArray.push(searchInput); //update this to selectedCity
         //create button and add to side bar
         let newButton = $('<button>');
         newButton.addClass('location');
         newButton.text(searchInput);
-        searchHistoryEl.append(newButton);
+        searchHistoryEl.prepend(newButton);
         saveLocations ();
     }
 }
@@ -64,7 +64,7 @@ function getLocations () {
 
 //generate list of locations that match search
 function generateLocations() {
-
+    generatedLocations = [];
     geocodingURL = 'https://api.openweathermap.org/geo/1.0/direct?q=' + searchInput + '&limit=10&appid=d1812ca69b57b9e8fd8ff23d673f0f07'
 
     fetch(geocodingURL)
@@ -75,26 +75,36 @@ function generateLocations() {
             console.log(data); //TODO rm
             console.log(data.length); //TODO rm
             
-            if (data.length > 1) {
+            //if (data.length > 1) {
                 for (i = 0; i < data.length; i++) {
-                    generatedLocations.push(data[i].name + ',' + data[i].state + ',' + data[i].country)
+                    //generatedLocations.push(data[i].name + ',' + data[i].state + ',' + data[i].country)
+                    generatedLocations.push([data[i].name, data[i].state, data[i].country, data[i].lat, data[i].lon]);
                 }
-                //do some stuff for user to select the right one
                 console.log(generatedLocations);
-                selectedLocation = generatedLocations[0]; //temporary
-            }
-            else {
+                //do some stuff for user to select the right one
+                //console.log(generatedLocations);
+                //selectedLocation = generatedLocations[0]; //temporary
+            //}
+           // else {
                 //go straight to geocode. do not pass go. do not collect £200
-                selectedLocation = data[0].name + ',' + data[0].state + ',' + data[0].country;
+            //    selectedLocation = data[0].name + ',' + data[0].state + ',' + data[0].country;
                 geocodeLocation();
-            }
+           // }
+           
         })
         .catch(function (error) {
             console.error(`This location has not been recognised, please try again.`, error);
         });
 }
 
+function chooseCity() {
+    //
+}
+
 function geocodeLocation() {
+    console.log('selected city:' + selectedCity);
+    latitude = generatedLocations[0][3];
+    longitude = generatedLocations[0][4];
     queryURL = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + latitude + '&lon=' + longitude + '&appid=d1812ca69b57b9e8fd8ff23d673f0f07';
     fetch(queryURL)
         .then(function (response) {
@@ -102,7 +112,7 @@ function geocodeLocation() {
         })
         .then(function (data2) {
 
-        console.log(data2);
+        console.log('weather data:' + data2);
     
     })
     .catch(function (error) {
