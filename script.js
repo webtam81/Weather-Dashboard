@@ -6,12 +6,11 @@ let geocodedLocation;
 
 let queryURL;
 let geocodingURL;
-// = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + latitude + '&lon=' + longitude + '&appid=d1812ca69b57b9e8fd8ff23d673f0f07';
 
 let searchBtn = $('#search-button');
 //let locationsArray = ['Birmingham', 'Toronto', 'Aberdeen']; //TODO change to empty
-let generatedLocations = []; //array to store results of initial location search
-let locationsArray = []; //array to hold stored locations
+let generatedLocations = {}; //object to store results of initial location search
+let locationsArray = {}; //object to hold stored locations
 let searchHistoryEl = $('#history');
 
 //FUNCTIONS
@@ -78,52 +77,36 @@ function generateLocations() {
             
             if (data.length > 1) {
                 for (i = 0; i < data.length; i++) {
-                    generatedLocations.push(data[0].name + ',' + data[0].state + ',' + data[0].country)
+                    generatedLocations.push(data[i].name + ',' + data[i].state + ',' + data[i].country)
                 }
+                //do some stuff for user to select the right one
+                console.log(generatedLocations);
+                selectedLocation = generatedLocations[0]; //temporary
             }
             else {
-                //select this result
-                //geocodeLocation();
+                //go straight to geocode. do not pass go. do not collect £200
+                selectedLocation = data[0].name + ',' + data[0].state + ',' + data[0].country;
+                geocodeLocation();
             }
-        });
+        })
         .catch(function (error) {
             console.error(`This location has not been recognised, please try again.`, error);
         });
 }
 
-function geocodeLocation () {
-  /*  fetch(geocodingURL)
-    .then(function (response) {
-    return response.json();
-    })
-    .then(function (data) {
+function geocodeLocation() {
+    queryURL = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + latitude + '&lon=' + longitude + '&appid=d1812ca69b57b9e8fd8ff23d673f0f07';
+    fetch(queryURL)
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data2) {
 
-    console.log(data);
-
-    console.log(data.length);
-
-    geocodedLocation = data[0].name + ',' + data[0].state + ',' + data[0].country;
-
-    if (data.length > 1) {
-        //put them in an array
-    }
-    else {
-        //select this result
-    }
+        console.log(data2);
     
-
-    //let geoResult = 
-    //new array for possible geocode options
-    //populate an autopopulate.....? Or a dropdown.....?
-
-   /*let geocodeResultsArray;   
-    for (let i = 0; i < data.length; i++) {
-          //geocodeResultsArray.push(data.name)
-    }
-    console.log(geocodeResultsArray);*/
     })
     .catch(function (error) {
-        console.error(`This location has not been recognised, please try again.`, error);
+        console.error(`ERRRRRORRRRRRR!!!!!!!!!!!!`, error);
     });
 }
 
