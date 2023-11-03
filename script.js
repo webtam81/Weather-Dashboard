@@ -3,31 +3,34 @@ const today = dayjs();
 
 let latitude;
 let longitude;
-let searchInput;
+let searchInput; //input from search box
 
-let queryURL;
+let queryURL; 
 let geocodingURL;
 
-let generatedLocation = []; //array to hold location name, lat long
+let generatedLocation = []; //array to hold location name, lat, long
 let locationsArray = []; //array to hold stored locations
-let forecastData; //forecast data from api
-let forecastDataArray = []; //new array for selected forecast data
+let forecastData; //all forecast data from api
+let forecastDataArray = []; //new array for selected forecast data for current day
 
 let searchHistoryEl = $('#history');
 let searchBtn = $('#search-button');
+let todayEl = $('#today');
+let forecastEl = $('#forecast');
 
 //FUNCTIONS
 //add location to side bar
 function addLocation () {
-    if (searchInput == '') {
-        return;
-    } else {
-        //TODO check if location alread in array. don't add it if it is but do search it
-        locationsArray.push(searchInput); 
+    if (($.inArray(searchInput, locationsArray)) === 0) { 
+        return; 
+    }
+    else {
+        locationsArray.unshift(searchInput); 
         //create button and add to side bar
         let newButton = $('<button>');
-        newButton.addClass('location');
-        newButton.text(searchInput);
+        newButton.addClass('location btn btn-secondary')
+        .text(searchInput)
+        .attr('value',searchInput);
         searchHistoryEl.prepend(newButton);
         saveLocations ();
     }
@@ -36,15 +39,13 @@ function addLocation () {
 //render locations already in array
 function renderLocations () {
     getLocations ();
-    //console.log(locationsArray);
     if (locationsArray.length < 1) {
         return;
     } else {
         for (let i = 0; i < locationsArray.length; i++) {
             let newButton = $('<button>');
-            newButton.addClass('location')
+            newButton.addClass('location btn btn-secondary')
             .attr('value',locationsArray[i])
-            //attributes for lat/long required
             newButton.text(locationsArray[i]);
             searchHistoryEl.append(newButton);
         }
@@ -67,17 +68,14 @@ function getLocations () {
 function generateLocation() {
     generatedLocation = [];
     geocodingURL = 'https://api.openweathermap.org/geo/1.0/direct?q=' + searchInput + '&limit=1&appid=d1812ca69b57b9e8fd8ff23d673f0f07'
-    //console.log(geocodingURL);//todo rm
     fetch(geocodingURL)
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
-            //console.log(data); //TODO rm
-            //console.log(data.length); //TODO rm
             generatedLocation.push(data[0].name, data[0].state, data[0].country, data[0].lat, data[0].lon);
-            //console.log(generatedLocation);
             geocodeLocation();
+            addLocation();
         })
         .catch(function (error) {
             console.error(`This location has not been recognised, please try again.`, error);
@@ -102,20 +100,10 @@ function geocodeLocation() {
 }
 
 function generateForecast() {
-    console.log(forecastData);
+    //console.log(forecastData); todo RM
 
-    //The city name
-    //The date
-    //An icon representation of weather conditions
-    //The temperature
-    //The humidity
-    //The wind speed
-
-    let forecastCity = '';
-    let forecastDate = today;
-    let forecastWeather = '';
-    let forecastHumidity = '';
-
+    //populate todays forecast array
+    //0: Date, 1: City, 2: Icon of weather conditions, 4: Weather condition for alt text, 5: temperature rounded to 2 dp, 5: humidity, 6: wind speed
     forecastDataArray[0] = forecastData.city.name;
     forecastDataArray[1] = today.format('D/M/YYYY');
     forecastDataArray[2] = forecastData.list[0].weather[0].icon;
@@ -124,36 +112,49 @@ function generateForecast() {
     forecastDataArray[5] = forecastData.list[0].main.humidity;
     forecastDataArray[6] = forecastData.list[0].wind.speed;
 
-    //console.log(forecastData.city.name);
-    //console.log(today.format('D/M/YYYY'));
-    //console.log(forecastData.list[0].weather[0].icon)
-    //console.log(forecastData.list[0].weather[0].main)
-    //console.log(forecastData.list[0].main.humidity)
-    //console.log(forecastData.list[0].main.humidity)
-    //console.log(forecastData.list[0].wind.speed)
+    console.log(forecastDataArray); //TODO rm
 
-    console.log(forecastDataArray);
-
-    //The date
-    //An icon representation of weather conditions
-    //The temperature
-    //The humidity
-
+    //Get the midday results for next 5 days and put them into a new array 'fiveDayArray'
     let futureData = forecastData.list;
     let fiveDayArray = [];
 
-    for (i = 0; i < futureData.length; i++) {
-        let weatherTime = futureData[i].dt_txt;
+    for (let j = 0; j < futureData.length; j++) {
+        let weatherTime = futureData[j].dt_txt;
         weatherTimeHr = parseInt(dayjs(weatherTime).format('H'));
-        //console.log(weatherTime);
-        //console.log(weatherTimeHr);
 
         if (weatherTimeHr === 12) {
-            fiveDayArray.push(futureData[i]);
+            fiveDayArray.push(futureData[j]);
         }
-        
+    console.log(fiveDayArray);//TODO rm
     }
-    console.log(fiveDayArray);
+
+    let fiveDayForecastArray = [];
+    //0: Date, 1: Icon of weather conditions, 2: Weather condition for alt text, 3: temperature, 4: wind, 5: humidity
+    for (let k = 0; k < fiveDayArray.length; k++) {
+        fiveDayForecastArray.push([dayjs(fiveDayArray[k].dt_txt).format('D/M/YYYY'),
+        fiveDayArray[k].weather[0].icon,
+        fiveDayArray[k].weather[0].main,
+        Math.round(((parseInt(fiveDayArray[k].main.temp) - 273.15) + Number.EPSILON) * 100) / 100,
+        fiveDayArray[k].wind.speed,
+        fiveDayArray[k].main.humidity])
+    }
+
+    console.log(fiveDayForecastArray);
+
+    //generate html for 5 day array
+    for (let n = 0; fiveDayForecastArray.length; n++) {
+        let newBlockEl = $('<article>');
+        let weatherImg = $('<img>');
+        weatherImg.attr('src','https://openweathermap.org/img/wn/'+fiveDayForecastArray[n][1]+'.png')
+        .attr('alt',fiveDayForecastArray[n][2])
+        newBlockEl.addClass('col')
+        .append('<h4>' + fiveDayForecastArray[n][0]+ '</h4>')
+        .append(weatherImg)
+        .append('<p>Temp: ' + fiveDayForecastArray[n][3]+ '\xB0C</p>')
+        .append('<p>Wind: ' + fiveDayForecastArray[n][4]+ 'm/s')
+        .append('<p>Humidity: ' + fiveDayForecastArray[n][5]+ '%</p>');
+        forecastEl.append(newBlockEl);
+    }
 }
 
 //EVENT LISTENERS
@@ -162,29 +163,21 @@ searchBtn.on('click', function() {
     event.preventDefault();
     searchInput = $('#search-input').val().trim();
     searchInputCleaned = searchInput.replace(/ /g, '%20');
-    //console.log(`You searched ${searchInput}`); //TODO rm
-    //TODO replace spaces with underscores or percentage 20 thing
-    generateLocation();
-    
-    //create button from this and add to aside
-    addLocation (); // do I want this here?
+
+    if (searchInput === '' || searchInput === undefined || searchInput === null) {
+        console.log('no location entered');
+        return;
+    } 
+    else {
+        generateLocation();
+    }
 });
 
 //re-search button
 
-//separate 
 
 //TODO
-//error checking for Cities??
-
-//DONE
-//searched cities go in left column and creates a button
-
-//NOTES
-//query url needs latitude and longitude. city name will be entered on the web page. use api to translate city to lat/lond and put in variables for this url
-//when these buttons are clicked the weather info goes in the right
-//store it all in local storage
-
+//when buttons are clicked the weather info goes in the right
 
 //TESTS / TEMP
 renderLocations ();
