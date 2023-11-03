@@ -116,28 +116,44 @@ function generateForecast() {
     let forecastWeather = '';
     let forecastHumidity = '';
 
+    forecastDataArray[0] = forecastData.city.name;
+    forecastDataArray[1] = today.format('D/M/YYYY');
+    forecastDataArray[2] = forecastData.list[0].weather[0].icon;
+    forecastDataArray[3] = forecastData.list[0].weather[0].main;
+    forecastDataArray[4] = Math.round(((parseInt(forecastData.list[0].main.temp) - 273.15) + Number.EPSILON) * 100) / 100;
+    forecastDataArray[5] = forecastData.list[0].main.humidity;
+    forecastDataArray[6] = forecastData.list[0].wind.speed;
 
+    //console.log(forecastData.city.name);
+    //console.log(today.format('D/M/YYYY'));
+    //console.log(forecastData.list[0].weather[0].icon)
+    //console.log(forecastData.list[0].weather[0].main)
+    //console.log(forecastData.list[0].main.humidity)
+    //console.log(forecastData.list[0].main.humidity)
+    //console.log(forecastData.list[0].wind.speed)
 
+    console.log(forecastDataArray);
 
-    //forecastDataArray[0][1] = forecastData.city.name;
-
-    console.log(forecastData.city.name);
-    console.log(today.format('D/M/YYYY'));
-    console.log(forecastData.list[0].weather[0].icon)
-    console.log(forecastData.list[0].weather[0].main)
-    console.log(forecastData.list[0].main.humidity)
-    console.log(forecastData.list[0].main.humidity)
-    console.log(forecastData.list[0].wind.speed)
-
-    //console.log(forecastDataArray);
-
-        //The date
+    //The date
     //An icon representation of weather conditions
     //The temperature
     //The humidity
 
-    let futureData;
+    let futureData = forecastData.list;
+    let fiveDayArray = [];
 
+    for (i = 0; i < futureData.length; i++) {
+        let weatherTime = futureData[i].dt_txt;
+        weatherTimeHr = parseInt(dayjs(weatherTime).format('H'));
+        //console.log(weatherTime);
+        //console.log(weatherTimeHr);
+
+        if (weatherTimeHr === 12) {
+            fiveDayArray.push(futureData[i]);
+        }
+        
+    }
+    console.log(fiveDayArray);
 }
 
 //EVENT LISTENERS
