@@ -1,0 +1,17 @@
+#today article {
+    border: 1px solid #222;
+    font-size: 120%;
+}
+
+#forecast article {
+    background-color: #698fb8;
+    color: #fff;
+}
+
+h2, h3, h4, h5 {
+    font-weight: bold !important;
+}
+
+.search-button {
+    width: 100%;
+}

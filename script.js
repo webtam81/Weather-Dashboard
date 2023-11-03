@@ -4,7 +4,7 @@ const today = dayjs();
 let latitude;
 let longitude;
 let searchInput; //input from search box
-
+let searchInputCleaned;
 let queryURL; 
 let geocodingURL;
 
@@ -15,12 +15,13 @@ let forecastDataArray = []; //new array for selected forecast data for current d
 
 let searchHistoryEl = $('#history');
 let searchBtn = $('#search-button');
+let cityBtn = $('.city-button');
 let todayEl = $('#today');
 let forecastEl = $('#forecast');
 
 //FUNCTIONS
 //add location to side bar
-function addLocation () {
+function addLocation() {
     if (($.inArray(searchInput, locationsArray)) === 0) { 
         return; 
     }
@@ -28,24 +29,25 @@ function addLocation () {
         locationsArray.unshift(searchInput); 
         //create button and add to side bar
         let newButton = $('<button>');
-        newButton.addClass('location btn btn-secondary')
+        newButton.addClass('location btn btn-secondary my-2 city-button')
         .text(searchInput)
         .attr('value',searchInput);
         searchHistoryEl.prepend(newButton);
-        saveLocations ();
+        saveLocations();
     }
 }
 
 //render locations already in array
-function renderLocations () {
-    getLocations ();
+function renderLocations() {
+    getLocations();
     if (locationsArray.length < 1) {
         return;
     } else {
         for (let i = 0; i < locationsArray.length; i++) {
             let newButton = $('<button>');
-            newButton.addClass('location btn btn-secondary')
+            newButton.addClass('location btn btn-secondary my-2 city-button')
             .attr('value',locationsArray[i])
+            .on('click', handleHistoryButton);
             newButton.text(locationsArray[i]);
             searchHistoryEl.append(newButton);
         }
@@ -53,29 +55,31 @@ function renderLocations () {
 }
 
 //save locations array to local storage
-function saveLocations () {
+function saveLocations() {
     localStorage.setItem('savedlocations',JSON.stringify(locationsArray));
 }
 
 //get locations from localstorage and put them into locationsArray
-function getLocations () {
+function getLocations() {
     if (localStorage.getItem('savedlocations')) {
         locationsArray = JSON.parse(localStorage.getItem('savedlocations'));
     }
 }
 
-//generate matched location
+//generate the location from the search or a button
 function generateLocation() {
     generatedLocation = [];
-    geocodingURL = 'https://api.openweathermap.org/geo/1.0/direct?q=' + searchInput + '&limit=1&appid=d1812ca69b57b9e8fd8ff23d673f0f07'
+    geocodingURL = 'https://api.openweathermap.org/geo/1.0/direct?q=' + searchInputCleaned + '&limit=1&appid=d1812ca69b57b9e8fd8ff23d673f0f07'
     fetch(geocodingURL)
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
             generatedLocation.push(data[0].name, data[0].state, data[0].country, data[0].lat, data[0].lon);
+            if (newSearch === true) {
+                addLocation();
+            }
             geocodeLocation();
-            addLocation();
         })
         .catch(function (error) {
             console.error(`This location has not been recognised, please try again.`, error);
@@ -100,8 +104,8 @@ function geocodeLocation() {
 }
 
 function generateForecast() {
-    //console.log(forecastData); todo RM
-
+    forecastEl.empty();
+    todayEl.empty();
     //populate todays forecast array
     //0: Date, 1: City, 2: Icon of weather conditions, 4: Weather condition for alt text, 5: temperature rounded to 2 dp, 5: humidity, 6: wind speed
     forecastDataArray[0] = forecastData.city.name;
@@ -112,7 +116,21 @@ function generateForecast() {
     forecastDataArray[5] = forecastData.list[0].main.humidity;
     forecastDataArray[6] = forecastData.list[0].wind.speed;
 
-    console.log(forecastDataArray); //TODO rm
+    //generate html for todays forecast
+        let newTodayEl = $('<article>');
+        let forecastImg = $('<img>');
+        forecastImg.addClass('weather-icon')
+        .attr('src','https://openweathermap.org/img/wn/' + forecastDataArray[2] + '.png')
+        .attr('alt',forecastDataArray[3])
+        newTodayEl.addClass('col p-3')
+        .append('<h3>' + forecastDataArray[0]+ ' (' + forecastDataArray[1] + ')</h3>')
+        .append(forecastImg)
+        .append('<p>Temp: ' + forecastDataArray[4]+ '\xB0C</p>')
+        .append('<p>Wind: ' + forecastDataArray[6]+ 'm/s')
+        .append('<p>Humidity: ' + forecastDataArray[5]+ '%</p>');
+        todayEl.append(newTodayEl);
+        let cityHeader = $('#today h3');
+        cityHeader.append(forecastImg);
 
     //Get the midday results for next 5 days and put them into a new array 'fiveDayArray'
     let futureData = forecastData.list;
@@ -125,7 +143,6 @@ function generateForecast() {
         if (weatherTimeHr === 12) {
             fiveDayArray.push(futureData[j]);
         }
-    console.log(fiveDayArray);//TODO rm
     }
 
     let fiveDayForecastArray = [];
@@ -139,21 +156,23 @@ function generateForecast() {
         fiveDayArray[k].main.humidity])
     }
 
-    console.log(fiveDayForecastArray);
-
     //generate html for 5 day array
-    for (let n = 0; fiveDayForecastArray.length; n++) {
+    forecastEl.append('<h4>5-Day Forecast:</h4>');
+   // console.log(fiveDayForecastArray);
+
+    for (let n = 0; n < fiveDayForecastArray.length; n++) {
         let newBlockEl = $('<article>');
         let weatherImg = $('<img>');
         weatherImg.attr('src','https://openweathermap.org/img/wn/'+fiveDayForecastArray[n][1]+'.png')
         .attr('alt',fiveDayForecastArray[n][2])
-        newBlockEl.addClass('col')
-        .append('<h4>' + fiveDayForecastArray[n][0]+ '</h4>')
+        newBlockEl.addClass('col m-2 p-1')
+        .append('<h5>' + fiveDayForecastArray[n][0]+ '</h5>')
         .append(weatherImg)
         .append('<p>Temp: ' + fiveDayForecastArray[n][3]+ '\xB0C</p>')
         .append('<p>Wind: ' + fiveDayForecastArray[n][4]+ 'm/s')
         .append('<p>Humidity: ' + fiveDayForecastArray[n][5]+ '%</p>');
         forecastEl.append(newBlockEl);
+        
     }
 }
 
@@ -164,20 +183,30 @@ searchBtn.on('click', function() {
     searchInput = $('#search-input').val().trim();
     searchInputCleaned = searchInput.replace(/ /g, '%20');
 
-    if (searchInput === '' || searchInput === undefined || searchInput === null) {
+    if (searchInputCleaned === '' || searchInputCleaned === undefined || searchInputCleaned === null) {
         console.log('no location entered');
         return;
     } 
     else {
+        newSearch = true;
         generateLocation();
     }
 });
 
 //re-search button
+function handleHistoryButton() {
+    searchInput = $(this).val().trim();
+    searchInputCleaned = searchInput.replace(/ /g, '%20');
 
+    if (searchInputCleaned === '' || searchInputCleaned === undefined || searchInputCleaned === null) {
+        console.log('no location entered');
+        return;
+    } 
+    else {
+        newSearch = false;
+        generateLocation();
+    }
+};
 
-//TODO
-//when buttons are clicked the weather info goes in the right
-
-//TESTS / TEMP
-renderLocations ();
+//INITIALISE PAGE
+renderLocations();
