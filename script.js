@@ -1,15 +1,17 @@
 //VARIABLES
+const today = dayjs();
+
 let latitude;
 let longitude;
 let searchInput;
-let geocodedLocation;
 
 let queryURL;
 let geocodingURL;
 
-let generatedLocations = new Array(); //array to store results of initial location search
+let generatedLocation = []; //array to hold location name, lat long
 let locationsArray = []; //array to hold stored locations
-let selectedCity = [];
+let forecastData; //forecast data from api
+let forecastDataArray = []; //new array for selected forecast data
 
 let searchHistoryEl = $('#history');
 let searchBtn = $('#search-button');
@@ -17,11 +19,11 @@ let searchBtn = $('#search-button');
 //FUNCTIONS
 //add location to side bar
 function addLocation () {
-    //add this to array...........??? what?
     if (searchInput == '') {
         return;
     } else {
-        locationsArray.push(searchInput); //update this to selectedCity
+        //TODO check if location alread in array. don't add it if it is but do search it
+        locationsArray.push(searchInput); 
         //create button and add to side bar
         let newButton = $('<button>');
         newButton.addClass('location');
@@ -40,7 +42,8 @@ function renderLocations () {
     } else {
         for (let i = 0; i < locationsArray.length; i++) {
             let newButton = $('<button>');
-            newButton.addClass('location');
+            newButton.addClass('location')
+            .attr('value',locationsArray[i])
             //attributes for lat/long required
             newButton.text(locationsArray[i]);
             searchHistoryEl.append(newButton);
@@ -48,92 +51,104 @@ function renderLocations () {
     }
 }
 
-//save array to local storage
+//save locations array to local storage
 function saveLocations () {
-    //save locations to localstorage
     localStorage.setItem('savedlocations',JSON.stringify(locationsArray));
 }
 
-//get array from local storage
+//get locations from localstorage and put them into locationsArray
 function getLocations () {
-    //get locations from localstorage
     if (localStorage.getItem('savedlocations')) {
         locationsArray = JSON.parse(localStorage.getItem('savedlocations'));
     }
 }
 
-//generate list of locations that match search
-function generateLocations() {
-    generatedLocations = [];
-    geocodingURL = 'https://api.openweathermap.org/geo/1.0/direct?q=' + searchInput + '&limit=10&appid=d1812ca69b57b9e8fd8ff23d673f0f07'
-
+//generate matched location
+function generateLocation() {
+    generatedLocation = [];
+    geocodingURL = 'https://api.openweathermap.org/geo/1.0/direct?q=' + searchInput + '&limit=1&appid=d1812ca69b57b9e8fd8ff23d673f0f07'
+    //console.log(geocodingURL);//todo rm
     fetch(geocodingURL)
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
-            console.log(data); //TODO rm
-            console.log(data.length); //TODO rm
-            
-            //if (data.length > 1) {
-                for (i = 0; i < data.length; i++) {
-                    //generatedLocations.push(data[i].name + ',' + data[i].state + ',' + data[i].country)
-                    generatedLocations.push([data[i].name, data[i].state, data[i].country, data[i].lat, data[i].lon]);
-                }
-                console.log(generatedLocations);
-                //do some stuff for user to select the right one
-                //console.log(generatedLocations);
-                //selectedLocation = generatedLocations[0]; //temporary
-            //}
-           // else {
-                //go straight to geocode. do not pass go. do not collect £200
-            //    selectedLocation = data[0].name + ',' + data[0].state + ',' + data[0].country;
-                geocodeLocation();
-           // }
-           
+            //console.log(data); //TODO rm
+            //console.log(data.length); //TODO rm
+            generatedLocation.push(data[0].name, data[0].state, data[0].country, data[0].lat, data[0].lon);
+            //console.log(generatedLocation);
+            geocodeLocation();
         })
         .catch(function (error) {
             console.error(`This location has not been recognised, please try again.`, error);
         });
 }
 
-function chooseCity() {
-    //
-}
-
 function geocodeLocation() {
-    console.log('selected city:' + selectedCity);
-    latitude = generatedLocations[0][3];
-    longitude = generatedLocations[0][4];
+    latitude = generatedLocation[3];
+    longitude = generatedLocation[4];
     queryURL = 'https://api.openweathermap.org/data/2.5/forecast?lat=' + latitude + '&lon=' + longitude + '&appid=d1812ca69b57b9e8fd8ff23d673f0f07';
     fetch(queryURL)
         .then(function (response) {
             return response.json();
         })
-        .then(function (data2) {
-
-        console.log('weather data:' + data2);
-    
+        .then(function (data) {
+            forecastData = data;
+            generateForecast();
     })
     .catch(function (error) {
-        console.error(`ERRRRRORRRRRRR!!!!!!!!!!!!`, error);
+        console.error(`Error finding location`, error);
     });
 }
 
+function generateForecast() {
+    console.log(forecastData);
+
+    //The city name
+    //The date
+    //An icon representation of weather conditions
+    //The temperature
+    //The humidity
+    //The wind speed
+
+    let forecastCity = '';
+    let forecastDate = today;
+    let forecastWeather = '';
+    let forecastHumidity = '';
+
+
+
+
+    //forecastDataArray[0][1] = forecastData.city.name;
+
+    console.log(forecastData.city.name);
+    console.log(today.format('D/M/YYYY'));
+    console.log(forecastData.list[0].weather[0].icon)
+    console.log(forecastData.list[0].weather[0].main)
+    console.log(forecastData.list[0].main.humidity)
+    console.log(forecastData.list[0].main.humidity)
+    console.log(forecastData.list[0].wind.speed)
+
+    //console.log(forecastDataArray);
+
+        //The date
+    //An icon representation of weather conditions
+    //The temperature
+    //The humidity
+
+    let futureData;
+
+}
 
 //EVENT LISTENERS
 //search button - generate location list
 searchBtn.on('click', function() {
     event.preventDefault();
     searchInput = $('#search-input').val().trim();
+    searchInputCleaned = searchInput.replace(/ /g, '%20');
     //console.log(`You searched ${searchInput}`); //TODO rm
     //TODO replace spaces with underscores or percentage 20 thing
-    generateLocations();
-    
-    //move these somewhere else
-    //geocodingURL = 'https://api.openweathermap.org/geo/1.0/direct?q=' + geocodedLocation + '&limit=10&appid=d1812ca69b57b9e8fd8ff23d673f0f07';
-    //geocodeLocation ();
-    //onsole.log(`Geocoding URL: ${geocodingURL}`); //TODO rm
+    generateLocation();
     
     //create button from this and add to aside
     addLocation (); // do I want this here?
