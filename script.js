@@ -40,6 +40,7 @@ function addLocation() {
 //render locations already in array
 function renderLocations() {
     getLocations();
+    console.log(locationsArray);
     if (locationsArray.length < 1) {
         return;
     } else {
